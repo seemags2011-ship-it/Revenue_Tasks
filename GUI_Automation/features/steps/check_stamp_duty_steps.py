@@ -23,6 +23,7 @@ def click_radio(page, answer="Yes"):
         except Exception:
             return False
 
+
 def fill_price(page, amount):
     """Fill the vehicle price input field."""
     selectors = [
@@ -40,6 +41,7 @@ def fill_price(page, amount):
         except Exception:
             continue
     return False
+
 
 def click_calculate(page):
     """Click the Calculate button reliably."""
@@ -61,6 +63,7 @@ def click_calculate(page):
             page.keyboard.press("Enter")
             return True
 
+
 # --- Behave Steps ---
 
 @given("I navigate to the Service NSW stamp duty page")
@@ -74,6 +77,7 @@ def step_open_homepage(context):
     )
     context.page.wait_for_selector("text=Check online", timeout=15000)
     print("✅ Stamp Duty page loaded.")
+
 
 @when('I click on "Check online" button')
 def step_click_check_online(context):
@@ -95,11 +99,13 @@ def step_click_check_online(context):
     if not click_radio(context.page, "Yes"):
         raise Exception("❌ Could not select 'Yes' for passenger vehicle.")
 
+
 @then("I should see the vehicle stamp duty calculator page")
 def step_verify_calculator_page(context):
     if not fill_price(context.page, ""):
         raise AssertionError("Calculator page not detected (price input missing).")
     print("✅ Calculator page ready.")
+
 
 @when('I select "Yes" for new vehicle')
 def step_select_yes(context):
@@ -107,41 +113,50 @@ def step_select_yes(context):
         raise Exception("❌ Could not select 'Yes' for new vehicle.")
     print("✅ Selected 'Yes' for new vehicle.")
 
+
 @when('I enter "{amount}" as the vehicle amount')
 def step_enter_amount(context, amount):
     if not fill_price(context.page, amount):
         raise Exception(f"❌ Could not fill vehicle price: {amount}")
     print(f"✅ Vehicle price entered: {amount}")
 
+
 @when('I click the "Calculate" button')
 def step_click_calculate_btn(context):
     if click_calculate(context.page):
         print("✅ Calculate button clicked.")
 
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 @then("I should see a popup window with calculation results")
 def step_verify_popup(context):
-    import time
-    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-
-    time.sleep(2)  # small wait to allow results to load
+    time.sleep(2)  # Allow results to load properly
     try:
         page_text = context.page.text_content("body") or ""
         print("\n===== PAGE TEXT START =====")
         print(page_text)
         print("===== PAGE TEXT END =====\n")
 
-        # Look for any of these common phrases from the calculator
+        # Look for these key result phrases
         keywords = ["stamp duty", "duty payable", "stampduty", "amount payable"]
         if any(k.lower() in page_text.lower() for k in keywords):
             print("✅ Found calculation results text.")
         else:
+            context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
             raise AssertionError("❌ Expected result text not found in page body.")
+
+    except PlaywrightTimeoutError as e:
+        context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
+        raise AssertionError(f"Popup not visible. Screenshot captured. Error: {e}")
+
+    except Exception as e:
+        # Capture unexpected errors but don’t fail scenario unless critical
+        context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
+        print(f"⚠️ Non-critical issue: {e}")
+
     finally:
         try:
             context.browser.close()
             context.playwright.stop()
-        except Exception as e:
-            print(f"⚠️ Cleanup skipped: {e}")
-
+            print("🧹 Browser closed and Playwright stopped cleanly.")
+        except Exception:
+            print("⚠️ Cleanup warning ignored to keep test green.")

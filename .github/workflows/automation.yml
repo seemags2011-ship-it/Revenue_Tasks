@@ -24,11 +24,11 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .venv
-          .\.venv\Scripts\python -m pip install --upgrade pip
-          .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt
-          .\.venv\Scripts\pip install -r API_Automation/requirements.txt
-          # HTML report formatter
-          .\.venv\Scripts\pip install behave-html-formatter
+           .\.venv\Scripts\python -m pip install --upgrade pip
+            .\.venv\Scripts\pip install greenlet
+            .\.venv\Scripts\pip install behave behave-html-formatter playwright requests
+             .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt
+             .\.venv\Scripts\pip install -r API_Automation/requirements.txt
 
       - name: Install Playwright browsers
         shell: pwsh

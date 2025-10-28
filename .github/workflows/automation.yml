@@ -37,16 +37,14 @@ jobs:
           .\.venv\Scripts\python -m playwright install
 
       - name: Run GUI tests (generate HTML report)
-        shell: cmd
+        shell: pwsh
         run: |
-          call .\.venv\Scripts\activate
-          behave GUI_Automation\features -f behave_html_formatter:HTMLFormatter -o GUI_Automation\reports\report.html
+          .\.venv\Scripts\python -m behave GUI_Automation/features -f behave_html_formatter:HTMLFormatter -o GUI_Automation/reports/report.html
 
       - name: Run API tests (generate HTML report)
-        shell: cmd
+        shell: pwsh
         run: |
-          call .\.venv\Scripts\activate
-          behave API_Automation\features -f behave_html_formatter:HTMLFormatter -o API_Automation\reports\report.html
+          .\.venv\Scripts\python -m behave API_Automation/features -f behave_html_formatter:HTMLFormatter -o API_Automation/reports/report.html
 
       - name: Upload GUI report
         uses: actions/upload-artifact@v4

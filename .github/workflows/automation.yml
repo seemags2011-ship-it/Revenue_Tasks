@@ -1,0 +1,67 @@
+name: Automation Tests (GUI + API)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Create venv and install dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt
+          .\.venv\Scripts\pip install -r API_Automation/requirements.txt
+          # HTML report formatter
+          .\.venv\Scripts\pip install behave-html-formatter
+
+      - name: Install Playwright browsers
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python -m pip install playwright
+          .\.venv\Scripts\python -m playwright install
+
+      - name: Run GUI tests (generate HTML report)
+        shell: cmd
+        run: |
+          call .\.venv\Scripts\activate
+          behave GUI_Automation\features -f behave_html_formatter:HTMLFormatter -o GUI_Automation\reports\report.html
+
+      - name: Run API tests (generate HTML report)
+        shell: cmd
+        run: |
+          call .\.venv\Scripts\activate
+          behave API_Automation\features -f behave_html_formatter:HTMLFormatter -o API_Automation\reports\report.html
+
+      - name: Upload GUI report
+        uses: actions/upload-artifact@v4
+        with:
+          name: GUI-Report
+          path: |
+            GUI_Automation/reports/report.html
+            GUI_Automation/reports/**/*.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload API report
+        uses: actions/upload-artifact@v4
+        with:
+          name: API-Report
+          path: API_Automation/reports/report.html
+          if-no-files-found: warn
+          retention-days: 7

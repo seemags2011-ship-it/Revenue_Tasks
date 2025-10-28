@@ -24,17 +24,19 @@ jobs:
         shell: pwsh
         run: |
           python -m venv .venv
-           .\.venv\Scripts\python -m pip install --upgrade pip
-            .\.venv\Scripts\pip install greenlet
-            .\.venv\Scripts\pip install behave behave-html-formatter playwright requests
-             .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt
-             .\.venv\Scripts\pip install -r API_Automation/requirements.txt
+          .\.venv\Scripts\python -m pip install --upgrade pip setuptools wheel
+          # Fix for greenlet build issues
+          .\.venv\Scripts\pip install "greenlet==3.0.3" cffi
+          # Core dependencies
+          .\.venv\Scripts\pip install behave behave-html-formatter playwright requests
+          # Optional: install any local dependencies if present
+          if (Test-Path "GUI_Automation/requirements.txt") { .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt }
+          if (Test-Path "API_Automation/requirements.txt") { .\.venv\Scripts\pip install -r API_Automation/requirements.txt }
 
       - name: Install Playwright browsers
         shell: pwsh
         run: |
-          .\.venv\Scripts\python -m pip install playwright
-          .\.venv\Scripts\python -m playwright install
+          .\.venv\Scripts\python -m playwright install chromium
 
       - name: Run GUI tests (generate HTML report)
         shell: pwsh

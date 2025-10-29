@@ -1,162 +1,81 @@
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from behave import given, when, then
 import time
-from urllib.parse import urljoin
 
-# --- Helper Functions ---
 
-def click_radio(page, answer="Yes"):
-    """Select a radio button by its label or value, stabilize viewport."""
-    try:
-        radio = page.get_by_role("radio", name=answer)
-        radio.scroll_into_view_if_needed()
-        radio.click(force=True, timeout=5000)
-        return True
-    except Exception:
-        # fallback using label
+def safe_goto(page, url, retries=1):
+    for attempt in range(retries + 1):
         try:
-            label = page.locator(f"label:has-text('{answer}')").first
-            label.scroll_into_view_if_needed()
-            time.sleep(0.2)  # allow page animations
-            label.click(force=True)
+            page.goto(url, timeout=90000, wait_until="domcontentloaded")
+            page.wait_for_selector("text=Check online", timeout=15000)
+            print("✅ Page loaded successfully.")
             return True
-        except Exception:
-            return False
+        except Exception as e:
+            if attempt < retries:
+                print(f"⚠️ Navigation attempt {attempt+1} failed, retrying... ({e})")
+                time.sleep(3)
+            else:
+                print(f"❌ Navigation failed after {retries+1} attempts: {e}")
+                raise
 
-
-def fill_price(page, amount):
-    """Fill the vehicle price input field."""
-    selectors = [
-        "input[name*='price']",
-        "input[placeholder*='Price']",
-        "input[type='text']"
-    ]
-    for sel in selectors:
-        try:
-            input_box = page.locator(sel).first
-            if input_box.count() > 0:
-                input_box.scroll_into_view_if_needed()
-                input_box.fill(str(amount))
-                return True
-        except Exception:
-            continue
-    return False
-
-
-def click_calculate(page):
-    """Click the Calculate button reliably."""
-    try:
-        btn = page.get_by_role("button", name="Calculate")
-        btn.scroll_into_view_if_needed()
-        btn.click(force=True, timeout=5000)
-        return True
-    except Exception:
-        try:
-            # fallback: generic button
-            btn = page.locator("button:has-text('Calculate')").first
-            btn.scroll_into_view_if_needed()
-            time.sleep(0.2)
-            btn.click(force=True)
-            return True
-        except Exception:
-            # fallback: press Enter
-            page.keyboard.press("Enter")
-            return True
-
-
-# --- Behave Steps ---
 
 @given("I navigate to the Service NSW stamp duty page")
-def step_open_homepage(context):
-    context.playwright = sync_playwright().start()
-    context.browser = context.playwright.chromium.launch(headless=False, slow_mo=100)
-    context.page = context.browser.new_page()
-    context.page.goto(
+def step_open_stamp_duty_page(context):
+    print("🌐 Navigating to Service NSW stamp duty page...")
+    safe_goto(
+        context.page,
         "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
-        timeout=60000
+        retries=1
     )
-    context.page.wait_for_selector("text=Check online", timeout=15000)
-    print("✅ Stamp Duty page loaded.")
 
 
 @when('I click on "Check online" button')
 def step_click_check_online(context):
-    link = context.page.locator("a:has-text('Check online')").first
-    if not link or link.count() == 0:
-        raise Exception("❌ 'Check online' button not found.")
-
-    # navigate in same tab
-    href = link.get_attribute("href")
-    if href:
-        target = urljoin(context.page.url, href)
-        context.page.goto(target, timeout=60000)
-    else:
-        link.click(force=True)
-
-    context.page.wait_for_load_state("domcontentloaded", timeout=20000)
-
-    # Answer passenger vehicle question
-    if not click_radio(context.page, "Yes"):
-        raise Exception("❌ Could not select 'Yes' for passenger vehicle.")
+    print("🖱️ Clicking on 'Check online' button...")
+    button = context.page.locator("a:has-text('Check online')")
+    button.first.click(timeout=10000)
+    context.page.wait_for_load_state("domcontentloaded", timeout=15000)
+    context.page.wait_for_selector("text=Is this registration for a passenger vehicle?", timeout=20000)
+    print("✅ Calculator page loaded successfully.")
 
 
 @then("I should see the vehicle stamp duty calculator page")
 def step_verify_calculator_page(context):
-    if not fill_price(context.page, ""):
-        raise AssertionError("Calculator page not detected (price input missing).")
-    print("✅ Calculator page ready.")
+    print("🔍 Verifying calculator page visibility...")
+    context.page.wait_for_selector("text=Is this registration for a passenger vehicle?", timeout=15000)
+    print("✅ Calculator page verified.")
 
 
 @when('I select "Yes" for new vehicle')
 def step_select_yes(context):
-    if not click_radio(context.page, "Yes"):
-        raise Exception("❌ Could not select 'Yes' for new vehicle.")
-    print("✅ Selected 'Yes' for new vehicle.")
+    print("🚗 Selecting 'Yes' for new vehicle question...")
+    radio = context.page.locator("label:has-text('Yes')")
+    radio.first.click(timeout=5000)
+    print("✅ Selected 'Yes' successfully.")
 
 
-@when('I enter "{amount}" as the vehicle amount')
-def step_enter_amount(context, amount):
-    if not fill_price(context.page, amount):
-        raise Exception(f"❌ Could not fill vehicle price: {amount}")
-    print(f"✅ Vehicle price entered: {amount}")
+@when('I enter "50000" as the vehicle amount')
+def step_enter_amount(context):
+    print("💰 Entering vehicle price: 50000")
+    input_box = context.page.locator("input[type='text']").first
+    input_box.fill("50000")
+    print("✅ Vehicle price entered successfully.")
 
 
 @when('I click the "Calculate" button')
-def step_click_calculate_btn(context):
-    if click_calculate(context.page):
-        print("✅ Calculate button clicked.")
+def step_click_calculate(context):
+    print("🧮 Clicking the 'Calculate' button...")
+    btn = context.page.locator("button:has-text('Calculate')").first
+    btn.click(timeout=10000)
+    print("✅ Clicked 'Calculate' successfully.")
+    time.sleep(3)
 
 
 @then("I should see a popup window with calculation results")
 def step_verify_popup(context):
-    time.sleep(2)  # Allow results to load properly
-    try:
-        page_text = context.page.text_content("body") or ""
-        print("\n===== PAGE TEXT START =====")
-        print(page_text)
-        print("===== PAGE TEXT END =====\n")
-
-        # Look for these key result phrases
-        keywords = ["stamp duty", "duty payable", "stampduty", "amount payable"]
-        if any(k.lower() in page_text.lower() for k in keywords):
-            print("✅ Found calculation results text.")
-        else:
-            context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
-            raise AssertionError("❌ Expected result text not found in page body.")
-
-    except PlaywrightTimeoutError as e:
-        context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
-        raise AssertionError(f"Popup not visible. Screenshot captured. Error: {e}")
-
-    except Exception as e:
-        # Capture unexpected errors but don’t fail scenario unless critical
-        context.page.screenshot(path="GUI_Automation/reports/failure_screenshot.png")
-        print(f"⚠️ Non-critical issue: {e}")
-
-    finally:
-        try:
-            context.browser.close()
-            context.playwright.stop()
-            print("🧹 Browser closed and Playwright stopped cleanly.")
-        except Exception:
-            print("⚠️ Cleanup warning ignored to keep test green.")
+    print("🔍 Verifying calculation popup...")
+    body_text = context.page.text_content("body").lower()
+    assert "stamp duty" in body_text or "result" in body_text, "❌ Calculation result popup not found."
+    print("✅ Popup verified successfully.")
+    context.browser_manager.close_browser()
+    print("🧹 Browser closed.")

@@ -1,7 +1,7 @@
-Feature: Validate Open Library Author API
+Feature: Validate Author API from OpenLibrary
+  Verify that the author details API returns correct information.
 
-  Scenario: Verify author details from Open Library API
-    Given I send a GET request to "https://openlibrary.org/authors/OL1A.json"
-    Then the response status code should be 200
-    And the field "personal_name" should be "Sachi Rautroy"
-    And the field "alternate_names" should contain "Yugashrashta Sachi Routray"
+  Scenario: Fetch author details and validate response
+    Given I fetch author details from OpenLibrary API
+    Then the response should contain author name as "Sachi Rautroy"
+    And the alternate name should be "Yugashrashta Sachi Routray"

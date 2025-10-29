@@ -12,17 +12,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # --- Checkout Code ---
+      # --- Checkout the repository ---
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- Set Up Python ---
+      # --- Set up Python ---
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # --- Fix Unicode / Emoji Encoding (UTF-8) ---
+      # --- Configure environment encoding (UTF-8 safe) ---
       - name: Force UTF-8 Encoding (Windows fix)
         shell: pwsh
         run: |
@@ -30,7 +30,7 @@ jobs:
           setx PYTHONIOENCODING utf-8
           setx PYTHONUTF8 1
 
-      # --- Create venv and Install Dependencies ---
+      # --- Create venv and install dependencies ---
       - name: Create virtual environment and install dependencies
         shell: pwsh
         run: |
@@ -42,19 +42,25 @@ jobs:
           if (Test-Path "API_Automation/requirements.txt") { .\.venv\Scripts\pip install -r API_Automation/requirements.txt }
           .\.venv\Scripts\python -m playwright install chromium
 
-      # --- Run GUI Tests ---
+      # --- Run GUI tests (emoji-safe execution) ---
       - name: Run GUI tests (generate HTML report)
         shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
         run: |
           cd GUI_Automation
-          ..\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          ..\.venv\Scripts\python -X utf8 -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
-      # --- Run API Tests ---
+      # --- Run API tests (emoji-safe execution) ---
       - name: Run API tests (generate HTML report)
         shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
         run: |
           cd API_Automation
-          ..\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          ..\.venv\Scripts\python -X utf8 -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
       # --- Upload GUI Report ---
       - name: Upload GUI report

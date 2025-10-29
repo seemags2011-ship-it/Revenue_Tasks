@@ -20,39 +20,33 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Create venv and install dependencies
+      - name: Create virtual environment and install dependencies
         shell: pwsh
         run: |
           python -m venv .venv
-          .\.venv\Scripts\python -m pip install --upgrade pip setuptools wheel
-          .\.venv\Scripts\pip install "greenlet==3.0.3" cffi
-          .\.venv\Scripts\pip install behave behave-html-formatter playwright requests
+          .\.venv\Scripts\python -m pip install --upgrade pip
+          .\.venv\Scripts\pip install behave behave-html-formatter playwright requests greenlet cffi
           if (Test-Path "GUI_Automation/requirements.txt") { .\.venv\Scripts\pip install -r GUI_Automation/requirements.txt }
           if (Test-Path "API_Automation/requirements.txt") { .\.venv\Scripts\pip install -r API_Automation/requirements.txt }
-
-      - name: Install Playwright browsers
-        shell: pwsh
-        run: |
           .\.venv\Scripts\python -m playwright install chromium
 
       - name: Run GUI tests (generate HTML report)
         shell: pwsh
         run: |
-          python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html -o reports/report.html
+          cd GUI_Automation
+          ..\.\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
       - name: Run API tests (generate HTML report)
         shell: pwsh
         run: |
           cd API_Automation
-          python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          ..\.\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
       - name: Upload GUI report
         uses: actions/upload-artifact@v4
         with:
           name: GUI_Automation_Report
-          path: |
-            GUI_Automation/reports/report.html
-            GUI_Automation/reports/**/*.png
+          path: GUI_Automation/reports/report.html
           if-no-files-found: warn
           retention-days: 7
 

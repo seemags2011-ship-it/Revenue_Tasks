@@ -1,6 +1,9 @@
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from behave import given, when, then
 import time
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 
 
 def safe_goto(page, url, retries=1):

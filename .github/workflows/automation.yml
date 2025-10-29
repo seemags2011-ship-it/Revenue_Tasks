@@ -12,14 +12,25 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # --- Checkout Code ---
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --- Set Up Python ---
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+      # --- Fix Unicode / Emoji Encoding (UTF-8) ---
+      - name: Force UTF-8 Encoding (Windows fix)
+        shell: pwsh
+        run: |
+          chcp 65001
+          setx PYTHONIOENCODING utf-8
+          setx PYTHONUTF8 1
+
+      # --- Create venv and Install Dependencies ---
       - name: Create virtual environment and install dependencies
         shell: pwsh
         run: |
@@ -31,18 +42,21 @@ jobs:
           if (Test-Path "API_Automation/requirements.txt") { .\.venv\Scripts\pip install -r API_Automation/requirements.txt }
           .\.venv\Scripts\python -m playwright install chromium
 
+      # --- Run GUI Tests ---
       - name: Run GUI tests (generate HTML report)
         shell: pwsh
         run: |
           cd GUI_Automation
-          ..\.\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          ..\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
+      # --- Run API Tests ---
       - name: Run API tests (generate HTML report)
         shell: pwsh
         run: |
           cd API_Automation
-          ..\.\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          ..\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
+      # --- Upload GUI Report ---
       - name: Upload GUI report
         uses: actions/upload-artifact@v4
         with:
@@ -51,6 +65,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      # --- Upload API Report ---
       - name: Upload API report
         uses: actions/upload-artifact@v4
         with:

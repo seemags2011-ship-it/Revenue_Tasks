@@ -38,12 +38,13 @@ jobs:
       - name: Run GUI tests (generate HTML report)
         shell: pwsh
         run: |
-          ..\.venv\Scripts\python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
+          python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html -o reports/report.html
 
       - name: Run API tests (generate HTML report)
         shell: pwsh
         run: |
-          .\.venv\Scripts\python -m behave API_Automation/features -f behave_html_formatter:HTMLFormatter -o API_Automation/reports/report.html
+          cd API_Automation
+          python -m behave features -f behave_html_formatter:HTMLFormatter -o reports/report.html
 
       - name: Upload GUI report
         uses: actions/upload-artifact@v4

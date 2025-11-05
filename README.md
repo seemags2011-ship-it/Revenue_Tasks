@@ -1,50 +1,102 @@
-🧾 Revenue Automation Demo
+# 💼 Revenue Automation Demo
 
-This project demonstrates GUI and API automation for Revenue NSW sample tasks using Python (Behave BDD).
-It showcases automation design, test execution, and reporting aligned with real-world QA practices.
+This project demonstrates **GUI** and **API automation** for sample tasks based on *Revenue NSW* use cases using **Python (Behave BDD)**.  
+It showcases automation design, test execution, HTML reporting, and CI/CD integration following real-world QA best practices.
 
-🧰 Tools & Frameworks
-Behave (BDD) – For readable, business-style test cases
-Playwright – GUI browser automation
-Requests – API testing
-Behave HTML Formatter – For visual HTML reports
-Python Virtual Environment – For isolated dependencies
+---
 
-▶️ How to Run the Tests
+## 🧰 Tools & Frameworks
 
-Activate Environment
+| Purpose | Tool/Library |
+|----------|---------------|
+| **BDD Framework** | Behave |
+| **GUI Automation** | Playwright |
+| **API Testing** | Requests |
+| **HTML Reporting** | Behave HTML Formatter |
+| **Environment Management** | Python Virtual Environment |
+| **CI/CD** | GitHub Actions |
+
+---
+
+## ▶️ How to Run the Tests
+
+### **1️⃣ Activate the Virtual Environment**
+```bash
 .\.venv\Scripts\activate
-
-
-Run GUI Tests
+2️⃣ Run GUI Tests
+bash
+Copy code
 .\run_gui_tests.bat
+➡ Generates: GUI_Automation/reports/report.html
 
-
-➡ Generates GUI_Automation/reports/report.html
-
-Run API Tests
+3️⃣ Run API Tests
+bash
+Copy code
 .\run_api_tests.bat
+➡ Generates: API_Automation/reports/report.html
 
-
-➡ Generates API_Automation/reports/report.html
-Run All Tests
+4️⃣ Run All Tests Together
+bash
+Copy code
 .\run_all_tests.bat
-
-
-➡ Executes both GUI & API tests together
+➡ Executes both GUI and API tests and generates individual reports.
 
 📊 Reports
-Each test run produces an HTML report viewable in any browser
-Reports are located under:
-GUI_Automation/reports/
-API_Automation/reports/
+Each execution generates an HTML test report viewable in any browser.
 
-🔄 CI/CD (Optional Demo)
-When integrated into a pipeline (GitHub Actions):
-Install dependencies
-Run both .bat test suites
-Generate HTML reports
-Upload reports as artifacts for review
+Suite	Report Path
+GUI Tests	GUI_Automation/reports/report.html
+API Tests	API_Automation/reports/report.html
+
+Screenshots (for GUI) are automatically captured only on failure and stored in the same folder.
+
+🔄 CI/CD Integration (GitHub Actions)
+The project includes a fully automated pipeline:
+
+Creates and activates a Python virtual environment
+
+Installs dependencies for both GUI & API test suites
+
+Runs both test suites in sequence
+
+Generates HTML reports
+
+Uploads reports as downloadable artifacts
+
+Workflow File: .github/workflows/automation.yml
+
+You can view the pipeline under the Actions tab in this repository.
+
+✅ Folder Structure
+bash
+Copy code
+Revenue_Tasks/
+│
+├── GUI_Automation/
+│   ├── features/
+│   ├── page_objects/
+│   ├── utils/
+│   ├── reports/
+│   ├── behave.ini
+│   ├── requirements.txt
+│   └── run_gui_tests.bat
+│
+├── API_Automation/
+│   ├── features/
+│   │   └── author/
+│   │       ├── author_api.feature
+│   │       └── steps/
+│   │           └── author_steps.py
+│   ├── api_objects/
+│   ├── utils/
+│   ├── reports/
+│   ├── behave.ini
+│   ├── requirements.txt
+│   └── run_api_tests.bat
+│
+├── .github/workflows/automation.yml
+├── README.md
+└── run_all_tests.bat
 
 👤 Author
-Seema Suresh
+Seema GS
